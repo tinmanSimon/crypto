@@ -1,4 +1,4 @@
-import requestUtils
+import coinbaseRequestUtils
 import time
 
 coinbaseMainDomain = "api.coinbase.com"
@@ -6,7 +6,7 @@ coinbaseExchangeDomain = "api.exchange.coinbase.com"
 
 # this only gets the product ids that are ending with 'USD'.
 def getProductsIDs():
-    res = requestUtils.makeRequest('GET', coinbaseMainDomain, '/api/v3/brokerage/products')
+    res = coinbaseRequestUtils.makeRequest('GET', coinbaseMainDomain, '/api/v3/brokerage/products')
     if res.status_code != 200: return []
     response = res.json()
     products = response['products']
@@ -22,7 +22,7 @@ def getCandles(productId, granularity = 3600, endUnixTime = -1):
 
     # currently coinbase main domain doesn't give candles, it should work but it doesn't. As tmp
     # workaround I use exchange domain for now.
-    res = requestUtils.makeRequest('GET', coinbaseExchangeDomain, path)
+    res = coinbaseRequestUtils.makeRequest('GET', coinbaseExchangeDomain, path)
     if res.status_code != 200: return []
     return res.json()
 
