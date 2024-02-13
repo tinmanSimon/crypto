@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from mysecrets import mongo_uid, mongo_pwd
+from pandas import DataFrame
 
 cryptoV1Uri = f"mongodb+srv://{mongo_uid}:{mongo_pwd}@crypto-v1.y3nxe9o.mongodb.net/?retryWrites=true&w=majority"
 
@@ -36,6 +37,7 @@ class mongoProject:
         except Exception as e:
             print(e)
 
+    # delete the data for the current collection
     def deleteData(self, filter = {}):
         if self.collection == None: print("mongoProject: Can't delete data without setting collection first!"); return
         try:
@@ -43,3 +45,13 @@ class mongoProject:
             print("Successfully deleted data from MongoDB!")
         except Exception as e:
             print(e)
+
+    def getDataframe(self, database = '', collection = ''):
+        mongoCollection = self.collection
+        if database and collection: 
+            mongoCollection = self.client[database][collection]
+        if mongoCollection != None:
+            return DataFrame(mongoCollection.find())
+
+    def printCollection(self, database = '', collection = ''):
+        print(self.getDataframe(database, collection))
