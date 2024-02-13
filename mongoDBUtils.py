@@ -9,6 +9,7 @@ class mongoProject:
         self.projectUri = uri
         self.client = None
         self.createClient()
+        self.collection = None
 
     # create a mongo client and connect to the projectUri
     def createClient(self):
@@ -23,18 +24,22 @@ class mongoProject:
         
     def getCollection(self, database, collection):
         return self.client[database][collection]
+    
+    def setCollection(self, database, collection):
+        self.collection = self.client[database][collection]
 
+    def insertData(self, data):
+        if self.collection == None: print("mongoProject: Can't insert data without setting collection first!"); return
+        try:
+            self.collection.insert_many(data)
+            print("Successfully inserted data to MongoDB!")
+        except Exception as e:
+            print(e)
 
-
-mp = mongoProject()
-collection = mp.getCollection("crypto_analytics", "sort_by_volatilities")
-data = [
-    {
-        "product_id" : "BTC-USD",
-        "volatilities" : 10
-    }, {
-        "product_id" : "ETC-USD",
-        "volatilities" : 100
-    }
-]
-collection.insert_many(data)
+    def deleteData(self, filter = {}):
+        if self.collection == None: print("mongoProject: Can't delete data without setting collection first!"); return
+        try:
+            self.collection.delete_many(filter)
+            print("Successfully deleted data from MongoDB!")
+        except Exception as e:
+            print(e)
