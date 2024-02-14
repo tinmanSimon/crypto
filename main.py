@@ -10,7 +10,8 @@ import flask
 # cryptoProject.insertData(data)
 # df = cryptoProject.getDataframe()
 
-def getMongoTestRecords(request: flask.Request) -> flask.Response:
+def get_mongo_records(request: flask.Request) -> flask.Response:
+    print("get_mongo_records started")
     cryptoProject = mongoProject()
     cryptoProject.setCollection("crypto_analytics", "test_collection")
     df = cryptoProject.getDataframe()

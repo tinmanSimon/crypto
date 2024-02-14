@@ -4,7 +4,7 @@ import main
 app = flask.Flask(__name__)
 @app.get("/")
 def index():
-    return main.getMongoTestRecords(flask.request)
+    return main.get_mongo_records(flask.request)
 
 if __name__ == "__main__":
     # Local development only

@@ -15,13 +15,14 @@ class mongoProject:
     # create a mongo client and connect to the projectUri
     def createClient(self):
         if self.client: print("Client is already connected"); return
+        print(f"mongoProject createClient self.projectUri: {self.projectUri}")
         client = MongoClient(self.projectUri, server_api=ServerApi('1'))
         try:
             client.admin.command('ping')
             print("Successfully connected to MongoDB!")
             self.client = client
         except Exception as e:
-            print(e)
+            print("Failed to establish mongoDB connection. Error: ", e)
         
     def getCollection(self, database, collection):
         return self.client[database][collection]

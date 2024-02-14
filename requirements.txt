@@ -7,7 +7,7 @@ click==8.1.7
 coinbase-advanced-py==1.1.2
 cryptography==42.0.2
 dnspython==2.5.0
-Flask==3.0.2
+Flask==2.3.3
 idna==3.6
 itsdangerous==2.1.2
 Jinja2==3.1.3
