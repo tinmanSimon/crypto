@@ -46,12 +46,13 @@ class mongoProject:
         except Exception as e:
             print(e)
 
-    def getDataframe(self, database = '', collection = ''):
+    # by default we don't get _id field from collection
+    def getDataframe(self, database = '', collection = '', findParams = {'_id': False}):
         mongoCollection = self.collection
         if database and collection: 
             mongoCollection = self.client[database][collection]
         if mongoCollection != None:
-            return DataFrame(mongoCollection.find())
+            return DataFrame(mongoCollection.find({}, findParams))
 
     def printCollection(self, database = '', collection = ''):
         print(self.getDataframe(database, collection))
