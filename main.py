@@ -30,5 +30,5 @@ def render_results(request: flask.Request) -> flask.Response:
 cryptoDataHandler = cryptoData(True)
 cryptoDataHandler.drawCandles({
     'granularity' : 900,
-    'candleSize' : 600
+    'candleSize' : 900
 })

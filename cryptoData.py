@@ -84,7 +84,7 @@ class cryptoData:
 
     # for candleParams, see for getCandles
     def drawCandles(self, candleParams = {}, drawParams={
-        'HMAs' : [(5, 'orange'), (10, 'blue')], # HMAs in the format of (window, color).
+        'HMAs' : [(10, 'yellow'), (20, 'green'), (50, (8/255, 143/255, 143/255)), (100, 'blue'), (200, 'violet'), (400, 'red')], # HMAs in the format of (window, color).
     }):
         df = pd.DataFrame(data=self.getCandles(candleParams), columns=self.coinbaseCandleColumns)
         df.set_index("Date", inplace=True)
