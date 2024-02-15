@@ -1,5 +1,7 @@
 import coinbaseRequestUtils
 import time
+import pandas as pd
+import mplfinance as mpf
 
 coinbaseMainDomain = "api.coinbase.com"
 coinbaseExchangeDomain = "api.exchange.coinbase.com"
@@ -55,3 +57,9 @@ class cryptoData:
     def getTopVolatileProducts(self, resultSize = 50):
         productIDs = self.getProductsIDs()
         return self.sortProductsByVolatility(productIDs)[:resultSize]
+
+    def drawCandles(self, product_id, granularity = 3600):
+        df = pd.DataFrame(data=self.getCandles(product_id, granularity)[::-1], columns=["Date", "Low", "High", "Open", "Close", "Volume"])
+        df.set_index("Date", inplace=True)
+        df.index = pd.to_datetime(df.index, unit='s')
+        mpf.plot(df,volume=True,style='yahoo',type='candle')

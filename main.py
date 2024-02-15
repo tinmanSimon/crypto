@@ -4,6 +4,7 @@ import flask
 from flask import render_template
 import json
 
+
 # cryptoDataHandler = cryptoData(True)
 # data = cryptoDataHandler.getTopVolatileProducts()
 # cryptoProject = mongoProject()
@@ -19,3 +20,7 @@ def get_mongo_records(request: flask.Request) -> flask.Response:
     dataFrame = cryptoProject.getDataframe()
     jsonResult = json.dumps(dataFrame.to_dict('records'), indent=4)
     return render_template('index.html', data=jsonResult)
+
+
+cryptoDataHandler = cryptoData(True)
+cryptoDataHandler.drawCandles('BTC-USD', 900)
