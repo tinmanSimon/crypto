@@ -2,6 +2,7 @@ import coinbaseRequestUtils
 import time
 import pandas as pd
 import mplfinance as mpf
+import math
 
 coinbaseMainDomain = "api.coinbase.com"
 coinbaseExchangeDomain = "api.exchange.coinbase.com"
@@ -10,6 +11,7 @@ class cryptoData:
     def __init__(self, debugMode = False):
         self.debugMode = debugMode
         self.productIDsDebugLength = 5
+        self.coinbaseCandleColumns = ["Date", "Low", "High", "Open", "Close", "Volume"]
 
     # this only gets the product ids that are ending with 'USD'.
     def getProductsIDs(self):
@@ -57,9 +59,25 @@ class cryptoData:
     def getTopVolatileProducts(self, resultSize = 50):
         productIDs = self.getProductsIDs()
         return self.sortProductsByVolatility(productIDs)[:resultSize]
+    
+    def getEWMA(self, series, window):
+        return series.ewm(span=window, min_periods=window).mean()
+    
+    def getHMA(self, series, window):
+        newSeries = 2 * self.getEWMA(series, window // 2) - self.getEWMA(series, window)
+        return self.getEWMA(newSeries, int(math.sqrt(window)))
 
     def drawCandles(self, product_id, granularity = 3600):
-        df = pd.DataFrame(data=self.getCandles(product_id, granularity)[::-1], columns=["Date", "Low", "High", "Open", "Close", "Volume"])
+        df = pd.DataFrame(data=self.getCandles(product_id, granularity)[::-1], columns=self.coinbaseCandleColumns)
         df.set_index("Date", inplace=True)
         df.index = pd.to_datetime(df.index, unit='s')
-        mpf.plot(df,volume=True,style='yahoo',type='candle')
+
+        closeSeries = df["Close"]
+
+        apds = [ 
+            mpf.make_addplot(self.getHMA(closeSeries, 5), color='orange'),
+            mpf.make_addplot(self.getHMA(closeSeries, 10), color='green'),
+            mpf.make_addplot(self.getHMA(closeSeries, 25), color='blue'),
+            mpf.make_addplot(self.getHMA(closeSeries, 50), color='red')
+        ]
+        mpf.plot(df,addplot=apds, volume=True,style='yahoo',type='candle')

@@ -27,5 +27,5 @@ def render_results(request: flask.Request) -> flask.Response:
     return render_template('index.html', data=data)
 
 
-# cryptoDataHandler = cryptoData(True)
-# cryptoDataHandler.drawCandles('BTC-USD', 900)
+cryptoDataHandler = cryptoData(True)
+cryptoDataHandler.drawCandles('BTC-USD', 900)
