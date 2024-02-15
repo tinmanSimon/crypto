@@ -23,19 +23,34 @@ class cryptoData:
         if self.debugMode: return productIds[:self.productIDsDebugLength]
         return productIds
 
-    # by default if endUnixTime < 0, then it returns the latest 300 candles at the current moment.
-    # by default we request 1 hour candle stick data.
-    def getCandles(self, productId, granularity = 3600, endUnixTime = -1):
-        path = f"/products/{productId}/candles?granularity={granularity}"
-        if endUnixTime > 0:
-            startUnixTime = endUnixTime - granularity * 300
-            path += f"&start={startUnixTime}&end={endUnixTime}"
-
-        # currently coinbase main domain doesn't give candles, it should work but it doesn't. As tmp
-        # workaround I use exchange domain for now.
-        res = coinbaseRequestUtils.makeRequest('GET', coinbaseExchangeDomain, path)
-        if res.status_code != 200: return []
-        return res.json()
+    # candleParams has the following attributes:
+    # 'HMAs' : [(5, 'orange'), (10, 'blue')], # HMAs in the format of (window, color).
+    # 'requestEndUnixTime' : -1, # the end time of request, by default it's the time now.
+    # 'candleSize': -1, # the total number of candles for the requests. coinbase can only request 300 at a time.
+    # 'granularity' : 3600, # by default, granularity is 1 hour meaning 3600 seconds
+    # 'product_id' : 'BTC_USD' # by default, using btc
+    # returns a list of candles from coinbase.
+    def getCandles(self, candleParams = {}):
+        productId = 'BTC-USD' if not 'product_id' in candleParams else candleParams['product_id']
+        granularity = 3600 if not 'granularity' in candleParams else candleParams['granularity']
+        candleSize = 300 if not 'candleSize' in candleParams else candleParams['candleSize']
+        endUnixTime = int(time.time()) if not 'endUnixTime' in candleParams else candleParams['endUnixTime']
+        basePath = f"/products/{productId}/candles?granularity={granularity}"
+        candles = []
+        while candleSize > 0:
+            startUnixTime = endUnixTime - granularity * min(candleSize, 300)
+            path = basePath + f"&start={startUnixTime}&end={endUnixTime}"
+            print(f"path : {path}")
+            # currently coinbase main domain doesn't give candles, it should work but it doesn't. As tmp
+            # workaround I use exchange domain for now.
+            res = coinbaseRequestUtils.makeRequest('GET', coinbaseExchangeDomain, path)
+            if res.status_code != 200: 
+                print(f"Error! Failed to get coinbase candles for {path}")
+                return []
+            candles += res.json()
+            candleSize -= 300
+            endUnixTime = startUnixTime - 1
+        return candles[::-1] # response is in reverse chronological, so we reverse it to chronological
 
     # returns a list of product IDs that are sorted in volatility's decreasing order.
     # I measure volatility using accumulated absolute open-close price differences ratio.
@@ -67,17 +82,15 @@ class cryptoData:
         newSeries = 2 * self.getEWMA(series, window // 2) - self.getEWMA(series, window)
         return self.getEWMA(newSeries, int(math.sqrt(window)))
 
-    def drawCandles(self, product_id, granularity = 3600):
-        df = pd.DataFrame(data=self.getCandles(product_id, granularity)[::-1], columns=self.coinbaseCandleColumns)
+    # for candleParams, see for getCandles
+    def drawCandles(self, candleParams = {}, drawParams={
+        'HMAs' : [(5, 'orange'), (10, 'blue')], # HMAs in the format of (window, color).
+    }):
+        df = pd.DataFrame(data=self.getCandles(candleParams), columns=self.coinbaseCandleColumns)
         df.set_index("Date", inplace=True)
         df.index = pd.to_datetime(df.index, unit='s')
-
         closeSeries = df["Close"]
-
-        apds = [ 
-            mpf.make_addplot(self.getHMA(closeSeries, 5), color='orange'),
-            mpf.make_addplot(self.getHMA(closeSeries, 10), color='green'),
-            mpf.make_addplot(self.getHMA(closeSeries, 25), color='blue'),
-            mpf.make_addplot(self.getHMA(closeSeries, 50), color='red')
-        ]
+        apds = []
+        if 'HMAs' in drawParams:
+            apds += [mpf.make_addplot(self.getHMA(closeSeries, window), color=color) for window, color in drawParams['HMAs']]
         mpf.plot(df,addplot=apds, volume=True,style='yahoo',type='candle')

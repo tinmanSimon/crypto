@@ -28,4 +28,7 @@ def render_results(request: flask.Request) -> flask.Response:
 
 
 cryptoDataHandler = cryptoData(True)
-cryptoDataHandler.drawCandles('BTC-USD', 900)
+cryptoDataHandler.drawCandles({
+    'granularity' : 900,
+    'candleSize' : 600
+})
