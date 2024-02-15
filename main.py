@@ -13,14 +13,19 @@ import json
 # cryptoProject.insertData(data)
 # df = cryptoProject.getDataframe()
 
-def get_mongo_records(request: flask.Request) -> flask.Response:
+def get_mongo_records():
     print("get_mongo_records started")
     cryptoProject = mongoProject()
     cryptoProject.setCollection("crypto_analytics", "test_collection")
     dataFrame = cryptoProject.getDataframe()
     jsonResult = json.dumps(dataFrame.to_dict('records'), indent=4)
-    return render_template('index.html', data=jsonResult)
+    return jsonResult
+
+def render_results(request: flask.Request) -> flask.Response:
+    data = []
+    data.append(["mongo records", get_mongo_records()])
+    return render_template('index.html', data=data)
 
 
-cryptoDataHandler = cryptoData(True)
-cryptoDataHandler.drawCandles('BTC-USD', 900)
+# cryptoDataHandler = cryptoData(True)
+# cryptoDataHandler.drawCandles('BTC-USD', 900)

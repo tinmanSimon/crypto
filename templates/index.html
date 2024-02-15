@@ -1,13 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Crypto</title>
+  <title>Crypto</title>
+  <style>
+    .h1-container {
+      display: flex;
+      flex-flow: row wrap;
+      justify-content: space-between;  /* Adjust spacing as needed */
+    }
+
+    h1 {
+      margin-right: 10px; /* Add spacing between h1 tags */
+    }
+  </style>
 </head>
-
 <body>
-    <pre><code>{{ data }}</code></pre>
+  <div class="h1-container">
+    {% for item in data %}
+    <div>
+        <h1>{{ item[0] }}</h1>
+        <pre><code>{{ item[1] }}</code></pre>
+    </div>
+    {% endfor %}
+  </div>
 </body>
-
 </html>
