@@ -15,9 +15,9 @@ import json
 
 def get_mongo_data(database, collectionName):
     print(f"get_mongo_data started. database: {database}, collectionName: {collectionName}")
-    cryptoProject = mongoProject()
-    cryptoProject.setCollection(database, collectionName)
-    volatileDataFrame = cryptoProject.getDataframe()
+    cryptoDB = mongoProject()
+    cryptoDB.setCollection(database, collectionName)
+    volatileDataFrame = cryptoDB.getDataframe()
     jsonResult = json.dumps(volatileDataFrame.to_dict('records'), indent=4)
     return jsonResult
 
@@ -32,22 +32,21 @@ def render_dashboard(request: flask.Request) -> flask.Response:
 def update_top_volatiles():
     cryptoDataHandler = cryptoData()
     top50VolatileProducts = cryptoDataHandler.getTopVolatileProducts()
-    cryptoProject = mongoProject()
-    cryptoProject.setCollection("crypto_analytics", "top_50_volatile_products")
-    cryptoProject.deleteData()
-    cryptoProject.insertData(top50VolatileProducts)
+    cryptoDB = mongoProject()
+    cryptoDB.updateCollectionData(top50VolatileProducts, "crypto_analytics", "top_50_volatile_products")
 
 def update_hourly_trends():
     print("update_hourly_trends started")
-    cryptoProject = mongoProject()
-    volatileDataFrame = cryptoProject.getDataframe("crypto_analytics", "top_50_volatile_products")
+    cryptoDB = mongoProject()
+    volatileDataFrame = cryptoDB.getDataframe("crypto_analytics", "top_50_volatile_products")
     productIDs = volatileDataFrame['product_id'].to_list()
     cryptoDataHandler = cryptoData()
     upTrendProducts, downTrendProducts = cryptoDataHandler.findCurHourlyTrends(productIDs)
-    cryptoProject.updateCollectionData(upTrendProducts, "crypto_analytics", "up_trends")
-    cryptoProject.updateCollectionData(downTrendProducts, "crypto_analytics", "down_trends")
+    cryptoDB.updateCollectionData(upTrendProducts, "crypto_analytics", "up_trends")
+    cryptoDB.updateCollectionData(downTrendProducts, "crypto_analytics", "down_trends")
     
 # cryptoDataHandler = cryptoData()
 # cryptoDataHandler.findCurHourlyTrends(['SPA-USD'])
 # cryptoDataHandler.drawCandles({'product_id': 'SPA-USD'})
 # update_hourly_trends()
+# update_top_volatiles()
