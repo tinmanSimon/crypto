@@ -26,7 +26,6 @@ def render_results(request: flask.Request) -> flask.Response:
     data.append(["mongo records", get_mongo_records()])
     return render_template('index.html', data=data)
 
-
 cryptoDataHandler = cryptoData()
 # cryptoDataHandler.drawCandles({
 #     'granularity' : 900,

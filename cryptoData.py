@@ -25,15 +25,15 @@ class cryptoData:
 
     # candleParams has the following attributes:
     # 'requestEndUnixTime' : -1, # the end time of request, by default it's the time now.
-    # 'candleSize': -1, # the total number of candles for the requests. coinbase can only request 300 at a time.
+    # 'candleSize': -1, # the total number of candles for the requests.
     # 'granularity' : 3600, # by default, granularity is 1 hour meaning 3600 seconds
     # 'product_id' : 'BTC_USD' # by default, using btc
     # returns a list of candles from coinbase.
     def getCandles(self, candleParams = {}):
-        productId = 'BTC-USD' if not 'product_id' in candleParams else candleParams['product_id']
-        granularity = 3600 if not 'granularity' in candleParams else candleParams['granularity']
-        candleSize = 300 if not 'candleSize' in candleParams else candleParams['candleSize']
-        endUnixTime = int(time.time()) if not 'endUnixTime' in candleParams else candleParams['endUnixTime']
+        productId = candleParams.get('product_id', 'BTC-USD') 
+        granularity = candleParams.get('granularity', 3600) 
+        candleSize = candleParams.get('candleSize', 300) 
+        endUnixTime = candleParams.get('endUnixTime', int(time.time()))  
         basePath = f"/products/{productId}/candles?granularity={granularity}"
         candles = []
         while candleSize > 0:
