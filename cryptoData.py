@@ -84,13 +84,18 @@ class cryptoData:
 
     # for candleParams, see for getCandles
     def drawCandles(self, candleParams = {}, drawParams={
-        'HMAs' : [(10, 'yellow'), (20, 'green'), (50, (8/255, 143/255, 143/255)), (100, 'blue'), (200, 'violet'), (400, 'red')], # HMAs in the format of (window, color).
+        'HMAs' : [ # HMAs in the format of (window, color).
+            (10, 'yellow'), 
+            (20, 'green'), 
+            (50, (8/255, 143/255, 143/255)), 
+            (100, 'blue'), 
+            (200, 'violet'), 
+            (400, 'red')
+        ], 
     }):
         df = pd.DataFrame(data=self.getCandles(candleParams), columns=self.coinbaseCandleColumns)
         df.set_index("Date", inplace=True)
         df.index = pd.to_datetime(df.index, unit='s')
         closeSeries = df["Close"]
-        apds = []
-        if 'HMAs' in drawParams:
-            apds += [mpf.make_addplot(self.getHMA(closeSeries, window), color=color) for window, color in drawParams['HMAs']]
-        mpf.plot(df,addplot=apds, volume=True,style='yahoo',type='candle')
+        apds = [mpf.make_addplot(self.getHMA(closeSeries, window), color=color) for window, color in drawParams.get('HMAs', [])]
+        mpf.plot(df, addplot=apds, volume=True,style='yahoo',type='candle')
