@@ -57,3 +57,9 @@ class mongoProject:
 
     def printCollection(self, database = '', collection = ''):
         print(self.getDataframe(database, collection))
+
+    def updateCollectionData(self, data, database = '', collectionName = ''):
+        if database and collectionName: 
+            self.setCollection(database, collectionName)
+        self.deleteData()
+        self.insertData(data)

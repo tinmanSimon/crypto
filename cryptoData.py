@@ -111,7 +111,7 @@ class cryptoData:
         downTrendProducts, upTrendProducts = [], []
         for productID in productIDs:
             print(f"Determine hourly trend for {productID}")
-            candles = self.getCandles({
+            candles = self.getCandles(candleParams={
                 'granularity' : 3600,
                 'product_id' : productID
             })
@@ -120,7 +120,7 @@ class cryptoData:
             HMA50 = self.getHMA(closeSeries, 50)
             HMA100 = self.getHMA(closeSeries, 100)
             if self.upTrend(HMA50) and self.upTrend(HMA100):
-                upTrendProducts.append(productID)
+                upTrendProducts.append({'product_id' : productID})
             if self.downTrend(HMA50) and self.downTrend(HMA100):
-                downTrendProducts.append(productID)
+                downTrendProducts.append({'product_id' : productID})
         return upTrendProducts, downTrendProducts
