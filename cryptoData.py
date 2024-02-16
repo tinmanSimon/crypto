@@ -25,21 +25,21 @@ class cryptoData:
 
     # candleParams has the following attributes:
     # 'requestEndUnixTime' : -1, # the end time of request, by default it's the time now.
-    # 'candleSize': -1, # the total number of candles for the requests.
+    # 'candleSize': 600 # the total number of candles for the requests. by default 600 cuz we might have HMA400
     # 'granularity' : 3600, # by default, granularity is 1 hour meaning 3600 seconds
-    # 'product_id' : 'BTC_USD' # by default, using btc
+    # 'product_id' : 'BTC-USD' # by default, using btc
     # returns a list of candles from coinbase.
     def getCandles(self, candleParams = {}):
         productId = candleParams.get('product_id', 'BTC-USD') 
         granularity = candleParams.get('granularity', 3600) 
-        candleSize = candleParams.get('candleSize', 300) 
+        candleSize = candleParams.get('candleSize', 600) 
         endUnixTime = candleParams.get('endUnixTime', int(time.time()))  
         basePath = f"/products/{productId}/candles?granularity={granularity}"
         candles = []
         while candleSize > 0:
             startUnixTime = endUnixTime - granularity * min(candleSize, 300)
             path = basePath + f"&start={startUnixTime}&end={endUnixTime}"
-            print(f"path : {path}")
+            print(f"getCandles path : {path}")
             # currently coinbase main domain doesn't give candles, it should work but it doesn't. As tmp
             # workaround I use exchange domain for now.
             res = coinbaseRequestUtils.makeRequest('GET', coinbaseExchangeDomain, path)
@@ -58,7 +58,7 @@ class cryptoData:
         coinIDVolatilityTuples = []
         for coinID in coinIDs:
             print(f"Now dealing with {coinID}")
-            candles = self.getCandles(coinID)
+            candles = self.getCandles({'product_id' : coinID})
             if len(candles) < 2: 
                 print(f"Error! candle ID: {coinID} has {len(candles)} items!")
                 continue
@@ -96,7 +96,7 @@ class cryptoData:
         df.set_index("Date", inplace=True)
         df.index = pd.to_datetime(df.index, unit='s')
         closeSeries = df["Close"]
-        apds = [mpf.make_addplot(self.getHMA(closeSeries, window), color=color) for window, color in drawParams.get('HMAs', [])]
+        apds = [mpf.make_addplot(self.getHMA(closeSeries, window), color=color) for window, color in drawParams.get('HMAs', []) if window < closeSeries.size]
         mpf.plot(df, addplot=apds, volume=True,style='yahoo',type='candle')
 
     # expect series to be a pandas series
@@ -123,5 +123,4 @@ class cryptoData:
                 upTrendProducts.append(productID)
             if self.downTrend(HMA50) and self.downTrend(HMA100):
                 downTrendProducts.append(productID)
-        print(f"upTreandProducts: {upTrendProducts}")
-        print(f"downTrendProducts: {downTrendProducts}")
+        return upTrendProducts, downTrendProducts
