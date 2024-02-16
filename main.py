@@ -27,8 +27,10 @@ def render_results(request: flask.Request) -> flask.Response:
     return render_template('index.html', data=data)
 
 
-cryptoDataHandler = cryptoData(True)
-cryptoDataHandler.drawCandles({
-    'granularity' : 900,
-    'candleSize' : 600
-})
+cryptoDataHandler = cryptoData()
+# cryptoDataHandler.drawCandles({
+#     'granularity' : 900,
+#     'candleSize' : 600
+# })
+testIDs = cryptoDataHandler.getProductsIDs()[:10]
+cryptoDataHandler.findCurHourlyTrends(testIDs)

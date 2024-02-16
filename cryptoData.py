@@ -24,7 +24,6 @@ class cryptoData:
         return productIds
 
     # candleParams has the following attributes:
-    # 'HMAs' : [(5, 'orange'), (10, 'blue')], # HMAs in the format of (window, color).
     # 'requestEndUnixTime' : -1, # the end time of request, by default it's the time now.
     # 'candleSize': -1, # the total number of candles for the requests. coinbase can only request 300 at a time.
     # 'granularity' : 3600, # by default, granularity is 1 hour meaning 3600 seconds
@@ -99,3 +98,30 @@ class cryptoData:
         closeSeries = df["Close"]
         apds = [mpf.make_addplot(self.getHMA(closeSeries, window), color=color) for window, color in drawParams.get('HMAs', [])]
         mpf.plot(df, addplot=apds, volume=True,style='yahoo',type='candle')
+
+    # expect series to be a pandas series
+    def upTrend(self, series):
+        return series.size > 1 and series.iat[-1] > series.iat[-2]
+    
+    def downTrend(self, series):
+        return series.size > 1 and series.iat[-1] < series.iat[-2]
+
+    # find trends over a list of products
+    def findCurHourlyTrends(self, productIDs):
+        downTrendProducts, upTrendProducts = [], []
+        for productID in productIDs:
+            print(f"Determine hourly trend for {productID}")
+            candles = self.getCandles({
+                'granularity' : 3600,
+                'product_id' : productID
+            })
+            dataFrame = pd.DataFrame(candles, columns=self.coinbaseCandleColumns)
+            closeSeries = dataFrame['Close']
+            HMA50 = self.getHMA(closeSeries, 50)
+            HMA100 = self.getHMA(closeSeries, 100)
+            if self.upTrend(HMA50) and self.upTrend(HMA100):
+                upTrendProducts.append(productID)
+            if self.downTrend(HMA50) and self.downTrend(HMA100):
+                downTrendProducts.append(productID)
+        print(f"upTreandProducts: {upTrendProducts}")
+        print(f"downTrendProducts: {downTrendProducts}")
