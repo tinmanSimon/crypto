@@ -105,22 +105,51 @@ class cryptoData:
     
     def downTrend(self, series):
         return series.size > 1 and series.iat[-1] < series.iat[-2]
+    
+    # returns True if series1 golden crosses series2 in either of the last 2 candle sticks.
+    # expect both series to have size > 2
+    def goldenCross(self, series1, series2):
+        if series1.size < 3 or series2.size < 3: return False
+        crossOnCurCandle = series1.iat[-1] > series2.iat[-1] and series1.iat[-2] < series2.iat[-2]
+        crossOnPrevCandle = series1.iat[-1] > series2.iat[-1] and series1.iat[-2] > series2.iat[-2] and series1.iat[-3] < series2.iat[-3]
+        return crossOnCurCandle or crossOnPrevCandle
+    
+    # returns True if series1 dead crosses series2 in either of the last 2 candle sticks.
+    # expect both series to have size > 2
+    def deadCross(self, series1, series2):
+        if series1.size < 3 or series2.size < 3: return False
+        crossOnCurCandle = series1.iat[-1] < series2.iat[-1] and series1.iat[-2] > series2.iat[-2]
+        crossOnPrevCandle = series1.iat[-1] < series2.iat[-1] and series1.iat[-2] < series2.iat[-2] and series1.iat[-3] > series2.iat[-3]
+        return crossOnCurCandle or crossOnPrevCandle
 
     # find trends over a list of products
     def findCurHourlyTrends(self, productIDs):
         downTrendProducts, upTrendProducts = [], []
+        goldenCrossProducts, deadCrossProducts = [], []
         for productID in productIDs:
             print(f"Determine hourly trend for {productID}")
             candles = self.getCandles(candleParams={
                 'granularity' : 3600,
-                'product_id' : productID
+                'product_id' : productID,
+                'candleSize' : 300
             })
             dataFrame = pd.DataFrame(candles, columns=self.coinbaseCandleColumns)
             closeSeries = dataFrame['Close']
             HMA50 = self.getHMA(closeSeries, 50)
             HMA100 = self.getHMA(closeSeries, 100)
+            HMA10 = self.getHMA(closeSeries, 10)
+            HMA20 = self.getHMA(closeSeries, 20)
             if self.upTrend(HMA50) and self.upTrend(HMA100):
                 upTrendProducts.append({'product_id' : productID})
+                if self.goldenCross(HMA10, HMA20):
+                    goldenCrossProducts.append({'product_id' : productID})
             if self.downTrend(HMA50) and self.downTrend(HMA100):
                 downTrendProducts.append({'product_id' : productID})
-        return upTrendProducts, downTrendProducts
+                if self.deadCross(HMA10, HMA20):
+                    deadCrossProducts.append({'product_id' : productID})
+        return {
+            'upTrendProducts' : upTrendProducts, 
+            'downTrendProducts': downTrendProducts,
+            'goldenCrossProducts': goldenCrossProducts,
+            'deadCrossProducts' : deadCrossProducts
+        }
