@@ -32,7 +32,7 @@ class cryptoData:
     def getCandles(self, candleParams = {}):
         productId = candleParams.get('product_id', 'BTC-USD') 
         granularity = candleParams.get('granularity', 3600) 
-        candleSize = candleParams.get('candleSize', 600) 
+        candleSize = candleParams.get('candleSize', 300) 
         endUnixTime = candleParams.get('endUnixTime', int(time.time()))  
         basePath = f"/products/{productId}/candles?granularity={granularity}"
         candles = []

@@ -40,3 +40,13 @@ def render_dashboard(request: flask.Request) -> flask.Response:
     data.append(["deadCrossProducts", get_mongo_data("crypto_analytics", "dead_cross")])
     return render_template('index.html', data=data)
 
+def update_volatile_flask_wrapper(request: flask.Request) -> flask.Response:
+    update_top_volatiles()
+    response = "update volatiles Done"
+    return flask.Response(response, mimetype="text/plain")
+
+def update_hourly_trends_wrapper(request: flask.Request) -> flask.Response:
+    update_hourly_trends()
+    response = "update hourly trends Done"
+    return flask.Response(response, mimetype="text/plain")
+
