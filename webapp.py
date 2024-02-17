@@ -1,10 +1,10 @@
 import flask
-import dashboard
+import main
 
 app = flask.Flask(__name__)
 @app.get("/")
 def index():
-    return dashboard.render_dashboard(flask.request)
+    return main.render_dashboard(flask.request)
 
 if __name__ == "__main__":
     # Local development only
