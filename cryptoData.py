@@ -121,11 +121,38 @@ class cryptoData:
         crossOnCurCandle = series1.iat[-1] < series2.iat[-1] and series1.iat[-2] > series2.iat[-2]
         crossOnPrevCandle = series1.iat[-1] < series2.iat[-1] and series1.iat[-2] < series2.iat[-2] and series1.iat[-3] > series2.iat[-3]
         return crossOnCurCandle or crossOnPrevCandle
+    
+    def determinTrends(self, closeSeries, productID, upTrendResults, downTrendResults):
+        HMA50 = self.getHMA(closeSeries, 50)
+        HMA100 = self.getHMA(closeSeries, 100)
+        HMA10 = self.getHMA(closeSeries, 10)
+        HMA20 = self.getHMA(closeSeries, 20)
+        if self.upTrend(HMA50) and self.upTrend(HMA100):
+            upTrendResults.append({'product_id' : productID})
+            if self.goldenCross(HMA10, HMA20):
+                upTrendResults.append({'product_id' : productID})
+        if self.downTrend(HMA50) and self.downTrend(HMA100):
+            downTrendResults.append({'product_id' : productID})
+            if self.deadCross(HMA10, HMA20):
+                downTrendResults.append({'product_id' : productID})
+
+    def findSOS(self, df, productID, SOSs):
+        opens, closes = df['Open'], df['Close']
+        candleBodies = abs(closes - opens)
+        for i in range(-2, -5, -1):
+            averageSampleLen = 5
+            maxBodies = max(candleBodies.iloc[(i - averageSampleLen):i])
+            curBody = candleBodies.iloc[i]
+            if curBody > (2 * maxBodies):
+                SOSs.append({'product_id' : productID})
+                print(f"{productID} at {i}")
+                break
 
     # find trends over a list of products
     def findCurHourlyTrends(self, productIDs):
         downTrendProducts, upTrendProducts = [], []
         goldenCrossProducts, deadCrossProducts = [], []
+        SOSs = []
         for productID in productIDs:
             print(f"Determine hourly trend for {productID}")
             candles = self.getCandles(candleParams={
@@ -135,21 +162,14 @@ class cryptoData:
             })
             dataFrame = pd.DataFrame(candles, columns=self.coinbaseCandleColumns)
             closeSeries = dataFrame['Close']
-            HMA50 = self.getHMA(closeSeries, 50)
-            HMA100 = self.getHMA(closeSeries, 100)
-            HMA10 = self.getHMA(closeSeries, 10)
-            HMA20 = self.getHMA(closeSeries, 20)
-            if self.upTrend(HMA50) and self.upTrend(HMA100):
-                upTrendProducts.append({'product_id' : productID})
-                if self.goldenCross(HMA10, HMA20):
-                    goldenCrossProducts.append({'product_id' : productID})
-            if self.downTrend(HMA50) and self.downTrend(HMA100):
-                downTrendProducts.append({'product_id' : productID})
-                if self.deadCross(HMA10, HMA20):
-                    deadCrossProducts.append({'product_id' : productID})
+            self.determinTrends(closeSeries, productID, upTrendProducts, downTrendProducts)
+            self.findSOS(dataFrame, productID, SOSs)
         return {
             'upTrendProducts' : upTrendProducts, 
             'downTrendProducts': downTrendProducts,
             'goldenCrossProducts': goldenCrossProducts,
-            'deadCrossProducts' : deadCrossProducts
+            'deadCrossProducts' : deadCrossProducts,
+            'SOSs' : SOSs
         }
+    
+    

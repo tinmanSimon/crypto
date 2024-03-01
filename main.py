@@ -50,3 +50,9 @@ def update_hourly_trends_wrapper(request: flask.Request) -> flask.Response:
     response = "update hourly trends Done"
     return flask.Response(response, mimetype="text/plain")
 
+cryptoDB = mongoProject()
+volatileDataFrame = cryptoDB.getDataframe("crypto_analytics", "top_50_volatile_products")
+productIDs = volatileDataFrame['product_id'].to_list()
+cryptoDataHandler = cryptoData()
+productTrends = cryptoDataHandler.findCurHourlyTrends(productIDs[:10])
+print(productTrends)
