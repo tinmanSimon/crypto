@@ -26,6 +26,15 @@ class mongoProject:
     def getCollection(self, database, collection):
         return self.client[database][collection]
     
+    def findOneItem(self, filter):
+        if self.collection == None: 
+            print("mongoProject: Can't findOneItem data without setting collection first!") 
+            return None 
+        try:
+            return self.collection.find_one(filter=filter)
+        except Exception as e:
+            print(e)
+    
     def setCollection(self, database, collection):
         self.collection = self.client[database][collection]
 
@@ -57,8 +66,19 @@ class mongoProject:
     def printCollection(self, database = '', collection = ''):
         print(self.getDataframe(database, collection))
 
-    def updateCollectionData(self, data, database = '', collectionName = ''):
+    def updateCollectionData(self, database = '', collectionName = '', filter = None, update = None):
         print(f"updateCollectionData. database={database}, collectionName={collectionName}")
+        if database == '' or collectionName == '': return
+        if filter == None or update == None: return
+        self.setCollection(database, collectionName)
+        try:
+            self.collection.update_many(filter=filter, update=update)
+            print("Successfully updated data from MongoDB!")
+        except Exception as e:
+            print(e)
+
+    def recreateCollectionData(self, data, database = '', collectionName = ''):
+        print(f"recreateCollectionData. database={database}, collectionName={collectionName}")
         if database and collectionName: 
             self.setCollection(database, collectionName)
         self.deleteData()

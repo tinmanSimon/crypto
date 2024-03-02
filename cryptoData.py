@@ -19,7 +19,7 @@ class cryptoData:
         if res.status_code != 200: return []
         response = res.json()
         products = response['products']
-        productIds = [p['product_id'] for p in products if p['product_id'].split('-')[-1] == 'USD']
+        productIds = [{"product_id" : p['product_id']} for p in products if p['product_id'].split('-')[-1] == 'USD']
         if self.debugMode: return productIds[:self.productIDsDebugLength]
         return productIds
 
@@ -50,6 +50,9 @@ class cryptoData:
             candleSize -= 300
             endUnixTime = startUnixTime - 1
         return candles[::-1] # response is in reverse chronological, so we reverse it to chronological
+    
+    def invalidCandles(self, candles):
+        return len(candles) < 10
 
     # returns a list of product IDs that are sorted in volatility's decreasing order.
     # I measure volatility using accumulated absolute open-close price differences ratio.
@@ -122,21 +125,26 @@ class cryptoData:
         crossOnPrevCandle = series1.iat[-1] < series2.iat[-1] and series1.iat[-2] < series2.iat[-2] and series1.iat[-3] > series2.iat[-3]
         return crossOnCurCandle or crossOnPrevCandle
     
-    def determinTrends(self, closeSeries, productID, upTrendResults, downTrendResults):
+    def determinTrends(self, closeSeries, productID, result):
         HMA50 = self.getHMA(closeSeries, 50)
         HMA100 = self.getHMA(closeSeries, 100)
         HMA10 = self.getHMA(closeSeries, 10)
         HMA20 = self.getHMA(closeSeries, 20)
+        upTrendProducts = result['uptrend-products']
+        downTrendProducts = result['downtrend-products']
+        goldenCrossProducts = result['golden-cross-products']
+        deadCrossProducts = result['dead-cross-products']
         if self.upTrend(HMA50) and self.upTrend(HMA100):
-            upTrendResults.append({'product_id' : productID})
+            upTrendProducts.append({'product_id' : productID})
             if self.goldenCross(HMA10, HMA20):
-                upTrendResults.append({'product_id' : productID})
+                goldenCrossProducts.append({'product_id' : productID})
         if self.downTrend(HMA50) and self.downTrend(HMA100):
-            downTrendResults.append({'product_id' : productID})
+            downTrendProducts.append({'product_id' : productID})
             if self.deadCross(HMA10, HMA20):
-                downTrendResults.append({'product_id' : productID})
+                deadCrossProducts.append({'product_id' : productID})
 
-    def findSOS(self, df, productID, SOSs):
+    def findSOS(self, df, productID, result):
+        SOSs = result['sos-products']
         opens, closes = df['Open'], df['Close']
         candleBodies = abs(closes - opens)
         for i in range(-2, -5, -1):
@@ -145,31 +153,42 @@ class cryptoData:
             curBody = candleBodies.iloc[i]
             if curBody > (2 * maxBodies):
                 SOSs.append({'product_id' : productID})
-                print(f"{productID} at {i}")
+                print(f"{productID} has SOS at {i}")
                 break
 
+    def getVolatiles(self, df, productID, result):
+        opens, closes = df['Open'], df['Close']
+        accumCandleGrowRatio = sum(abs(closes - opens) / opens)
+        result['products-by-volatiles'].append({
+            'product_id' : productID,
+            'volatility' : accumCandleGrowRatio
+        })
+
     # find trends over a list of products
-    def findCurHourlyTrends(self, productIDs):
-        downTrendProducts, upTrendProducts = [], []
-        goldenCrossProducts, deadCrossProducts = [], []
-        SOSs = []
+    def findCurHourlyAnalysis(self, productIDs):
+        result = {
+            'uptrend-products' : [], 
+            'downtrend-products': [],
+            'golden-cross-products': [],
+            'dead-cross-products' : [],
+            'sos-products' : [],
+            'products-by-volatiles' : []
+        }
         for productID in productIDs:
-            print(f"Determine hourly trend for {productID}")
+            print(f"Doing hourly analysis for {productID}")
             candles = self.getCandles(candleParams={
                 'granularity' : 3600,
                 'product_id' : productID,
                 'candleSize' : 300
             })
+            if self.invalidCandles(candles): continue
             dataFrame = pd.DataFrame(candles, columns=self.coinbaseCandleColumns)
             closeSeries = dataFrame['Close']
-            self.determinTrends(closeSeries, productID, upTrendProducts, downTrendProducts)
-            self.findSOS(dataFrame, productID, SOSs)
-        return {
-            'upTrendProducts' : upTrendProducts, 
-            'downTrendProducts': downTrendProducts,
-            'goldenCrossProducts': goldenCrossProducts,
-            'deadCrossProducts' : deadCrossProducts,
-            'SOSs' : SOSs
-        }
+            self.determinTrends(closeSeries, productID, result)
+            self.findSOS(dataFrame, productID, result)
+            self.getVolatiles(dataFrame, productID, result)
+
+        result['products-by-volatiles'].sort(key=lambda a: a['volatility'], reverse=True)
+        return result
     
     
