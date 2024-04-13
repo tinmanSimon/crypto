@@ -41,20 +41,25 @@ def getTradeProfits():
     annotation = ax.annotate(
         text='',
         xy=(0, 0),
-        xytext=(15, 15), # distance from x, y
+        xytext=(-100, 15), # distance from x, y
         textcoords='offset points',
         bbox={'boxstyle': 'round', 'fc': 'w'},
-        arrowprops={'arrowstyle': '->'}
+        arrowprops={'arrowstyle': '->'},
+        color="White"
     )
     annotation.set_visible(False)
-
 
     def on_hover(event):
         showAnnotation = False
         for bar in ax.patches: 
             if bar.contains(event)[0]:
-                annotation.set_text("askdjif")
-                annotation.get_bbox_patch().set_facecolor("Red")
+                x_pos = bar.get_x() + bar.get_width() / 2
+                height = bar.get_height()
+                displayText = "i sdaijfsadfjhiuwefundsafn waeuihf dsia nfjksdahfhjdasbaif nd"
+                annotation.set_text(displayText)
+                print(f"Annotation text:\n {displayText}")
+                annotation.xy = (x_pos, height + 0.1)
+                annotation.get_bbox_patch().set_facecolor("#008080")
                 annotation.set_visible(True)
                 showAnnotation = True 
         if not showAnnotation: 
