@@ -1,8 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import numpy as np
 
 def getTradeProfits():
+    fig, ax = plt.subplots()
     tradingHistory = pd.read_csv("./logs/paper-trading-history-all-2024-04-13T15_59_37.071Z.csv")
     uniqueSymbols = list(set(tradingHistory['Symbol']))
     tradingHistory = tradingHistory[tradingHistory['Status'] != 'Cancelled']
@@ -33,13 +35,32 @@ def getTradeProfits():
     profitHistory = pd.DataFrame(newRows, columns=newRows[0].keys()).sort_values(by='Profit')
     print(profitHistory)
     print(profitHistory['Profit'].sum())
-    ax = profitHistory.plot.bar(use_index=True, y='Profit')
-    for p in ax.patches:
-        x_pos = p.get_x() + p.get_width() / 2
-        row = profitHistory.iloc[int(x_pos)]
-        tmp = "\n".join([str(val) for val in row['ads']])
-        ax.annotate(tmp, (p.get_x() * 1.005, p.get_height() * 1.005))
+    profitHistory.plot.bar(use_index=True, y='Profit', ax=ax)
 
+
+    annotation = ax.annotate(
+        text='',
+        xy=(0, 0),
+        xytext=(15, 15), # distance from x, y
+        textcoords='offset points',
+        bbox={'boxstyle': 'round', 'fc': 'w'},
+        arrowprops={'arrowstyle': '->'}
+    )
+    annotation.set_visible(False)
+
+
+    def on_hover(event):
+        showAnnotation = False
+        for bar in ax.patches: 
+            if bar.contains(event)[0]:
+                annotation.set_text("askdjif")
+                annotation.get_bbox_patch().set_facecolor("Red")
+                annotation.set_visible(True)
+                showAnnotation = True 
+        if not showAnnotation: 
+            annotation.set_visible(False)
+        fig.canvas.draw_idle()
+    fig.canvas.mpl_connect('motion_notify_event', on_hover)
 
 getTradeProfits()
 
