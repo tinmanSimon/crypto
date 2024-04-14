@@ -3,8 +3,11 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import numpy as np
 
-def getTradeProfits():
-    fig, ax = plt.subplots()
+
+fig, ax = plt.subplots()
+
+
+def getProfitBars():
     tradingHistory = pd.read_csv("./logs/paper-trading-history-all-2024-04-13T15_59_37.071Z.csv")
     uniqueSymbols = list(set(tradingHistory['Symbol']))
     tradingHistory = tradingHistory[tradingHistory['Status'] != 'Cancelled']
@@ -35,8 +38,7 @@ def getTradeProfits():
     profitHistory = pd.DataFrame(newRows, columns=newRows[0].keys()).sort_values(by='Profit')
     print(profitHistory)
     print(profitHistory['Profit'].sum())
-    profitHistory.plot.bar(use_index=True, y='Profit', ax=ax)
-
+    profitHistory.plot.bar(x='Symbol', y='Profit', ax=ax, width=0.9)
 
     annotation = ax.annotate(
         text='',
@@ -49,15 +51,22 @@ def getTradeProfits():
     )
     annotation.set_visible(False)
 
+    lastHoverID = [None]
+    def uniquePrint(id, text):
+        if id == lastHoverID[0]: return 
+        print(text)
+        lastHoverID[0] = id
+
     def on_hover(event):
         showAnnotation = False
         for bar in ax.patches: 
             if bar.contains(event)[0]:
                 x_pos = bar.get_x() + bar.get_width() / 2
+                row = profitHistory.iloc[int(x_pos)]
                 height = bar.get_height()
-                displayText = "i sdaijfsadfjhiuwefundsafn waeuihf dsia nfjksdahfhjdasbaif nd"
+                displayText = f"Trading asset: {row['Symbol']}\nProfit: {row['Profit']}"
                 annotation.set_text(displayText)
-                print(f"Annotation text:\n {displayText}")
+                uniquePrint(x_pos, f"Annotation text:\n{displayText}\n")
                 annotation.xy = (x_pos, height + 0.1)
                 annotation.get_bbox_patch().set_facecolor("#008080")
                 annotation.set_visible(True)
@@ -66,11 +75,12 @@ def getTradeProfits():
             annotation.set_visible(False)
         fig.canvas.draw_idle()
     fig.canvas.mpl_connect('motion_notify_event', on_hover)
-
-getTradeProfits()
-
+    fig.set_size_inches(12, 8)
 
 
+getProfitBars()
 
 
+plt.tight_layout()
+plt.subplots_adjust(top=0.9, right=0.95, left=0.1) 
 plt.show()
