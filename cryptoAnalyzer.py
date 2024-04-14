@@ -51,6 +51,15 @@ def getProfitBars():
     )
     annotation.set_visible(False)
 
+    netProfitAnnotation = ax.annotate(
+        text=f"Net Profits: {profitHistory['Profit'].sum()}",
+        xy=(-0.5, 4),
+        textcoords='offset points',
+        bbox={'boxstyle': 'round', 'facecolor' : "purple"},
+        color="White"
+    )
+    netProfitAnnotation.set_visible(True)
+
     lastHoverID = [None]
     def uniquePrint(id, text):
         if id == lastHoverID[0]: return 
@@ -63,7 +72,7 @@ def getProfitBars():
             if bar.contains(event)[0]:
                 x_pos = bar.get_x() + bar.get_width() / 2
                 row = profitHistory.iloc[int(x_pos)]
-                height = bar.get_height()
+                height = max(0, bar.get_height())
                 displayText = f"Trading asset: {row['Symbol']}\nProfit: {row['Profit']}"
                 annotation.set_text(displayText)
                 uniquePrint(x_pos, f"Annotation text:\n{displayText}\n")
@@ -82,5 +91,5 @@ getProfitBars()
 
 
 plt.tight_layout()
-plt.subplots_adjust(top=0.9, right=0.95, left=0.1) 
+plt.subplots_adjust(top=0.9, right=0.9, left=0.1) 
 plt.show()
